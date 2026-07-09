@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세아 핸드캐리 발송예약</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Malgun Gothic','맑은 고딕',sans-serif;font-size:13px;color:#222;background:#f5f5f5;padding:20px}
+.wrap{max-width:780px;margin:0 auto;background:#fff;border:1px solid #ddd;border-radius:4px;overflow:hidden;transition:max-width .3s}
+.wrap.full-width{max-width:100%}
+.header{background:#4A90D9;color:#fff;padding:24px;text-align:center}
+.header h1{font-size:28px;font-weight:700;margin-bottom:0;letter-spacing:4px}
+.header p{font-size:12px;opacity:.9;line-height:1.7}
+.header .en{font-style:italic;font-size:11px;opacity:.8;margin-top:4px}
+.section{margin:20px 16px 0}
+.section-title{background:#333;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;display:inline-block}
+.section-notes{background:#f9f9f9;border:1px solid #ddd;border-bottom:none;padding:10px 16px;font-size:11px;color:#666;line-height:1.8}
+table.tbl{width:100%;border-collapse:collapse;border:1px solid #ddd}
+table.tbl tr{border-bottom:1px solid #eee}
+table.tbl td{padding:10px 14px;vertical-align:top}
+table.tbl .lbl{width:140px;background:#f7f7f7;font-weight:600;font-size:12px;line-height:1.6;border-right:1px solid #eee}
+table.tbl .lbl small{display:block;font-weight:400;color:#999;font-size:11px}
+table.tbl .val{background:#fff}
+input[type=text],input[type=date],input[type=time],input[type=number],select,textarea{
+  font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid #ccc;border-radius:3px;background:#fff;color:#333;width:100%;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#4A90D9;box-shadow:0 0 0 2px rgba(212,83,126,.15)}
+textarea{resize:vertical;min-height:80px}
+.row{display:flex;gap:10px;align-items:start}
+.row>div{flex:1}
+.radio-group{display:flex;gap:20px;align-items:center;padding:4px 0}
+.radio-group label{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px}
+.radio-group input[type=radio]{accent-color:#4A90D9}
+.chk-group{display:inline-flex;align-items:center;gap:6px}
+.chk-group input[type=checkbox]{accent-color:#4A90D9}
+.field-label{font-size:11px;color:#888;margin-bottom:3px}
+.memo-area{background:#f0f5ff;border-color:#a8c8f0}
+.memo-area:focus{background:#fff;border-color:#4A90D9}
+.btn-row{text-align:center;padding:24px 16px 30px}
+.btn-save{background:#4A90D9;color:#fff;border:none;padding:13px 56px;font-size:15px;font-weight:600;border-radius:4px;cursor:pointer;letter-spacing:1px;transition:background .2s}
+.btn-save:hover{background:#3A7BC8}
+.btn-save:active{transform:scale(.98)}
+.manual-link{font-size:11px;color:#2a7ae2;cursor:pointer;margin-left:8px;text-decoration:underline}
+.inline{display:inline-flex;align-items:center;gap:8px;width:100%}
+.hint{font-size:10.5px;color:#999;margin-top:4px}
+.pill-group{display:flex;gap:0;flex-wrap:wrap}
+.pill-group input[type=radio]{display:none}
+.pill-group label{padding:7px 18px;font-size:12px;font-weight:600;border:1px solid #ccc;background:#fff;color:#555;cursor:pointer;transition:all .15s;white-space:nowrap}
+.pill-group label:first-of-type{border-radius:4px 0 0 4px}
+.pill-group label:last-of-type{border-radius:0 4px 4px 0}
+.pill-group label:not(:first-of-type){border-left:none}
+.pill-group input[type=radio]:checked+label{background:#4A90D9;color:#fff;border-color:#4A90D9}
+.footer{text-align:center;padding:16px;font-size:11px;color:#aaa;border-top:1px solid #eee;margin-top:20px}
+
+/* 목록 화면 */
+.list-section{margin:20px 16px;display:none;overflow-x:auto}
+.list-section.active{display:block}
+.form-section.hidden{display:none}
+.tab-bar{display:flex;gap:0;margin:16px 16px 0}
+.tab-bar button{flex:1;padding:10px;font-size:13px;font-weight:600;border:1px solid #ddd;background:#f7f7f7;color:#666;cursor:pointer;transition:all .2s}
+.tab-bar button.active{background:#4A90D9;color:#fff;border-color:#4A90D9}
+.tab-bar button:first-child{border-radius:4px 0 0 4px}
+.tab-bar button:last-child{border-radius:0 4px 4px 0}
+.list-table{width:100%;border-collapse:collapse;font-size:12px}
+.list-table th{background:#555;color:#fff;padding:10px 8px;text-align:center;font-weight:500;white-space:nowrap;border:1px solid #444}
+.list-table td{padding:10px 8px;border:1px solid #eee;text-align:center;vertical-align:middle}
+.list-table tr:hover td{background:#f0f5ff}
+.list-table .btn-sm{font-size:11px;padding:4px 10px;border:1px solid #4A90D9;color:#4A90D9;background:#fff;border-radius:3px;cursor:pointer}
+.list-table .btn-sm:hover{background:#4A90D9;color:#fff}
+.empty-msg{text-align:center;padding:40px;color:#aaa;font-size:13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-wait{background:#fff3cd;color:#856404}
+.badge-done{background:#d4edda;color:#155724}
+
+@media(max-width:600px){
+  body{padding:8px}
+  table.tbl .lbl{width:100px;font-size:11px;padding:8px}
+  table.tbl .val{padding:8px}
+  .row{flex-direction:column;gap:6px}
+  .header h1{font-size:18px}
+  .inline{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>SAE-A EXPRESS</h1>
+  </div>
+
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('form')">발송예약 Registration</button>
+    <button onclick="showTab('list')">발송의뢰 조회 Inquiry</button>
+    <button onclick="showTab('download')">발송 리스트 다운로드 (물류팀 및 핸드캐리 업체 전용)</button>
+  </div>
+
+  <!-- ========== 등록 폼 ========== -->
+  <div class="form-section" id="formSection">
+
+    <div class="section">
+      <div class="section-title">운임 부담 Freight Charge</div>
+      <table class="tbl">
+        <tr><td class="lbl">운임 구분</td>
+        <td class="val">
+          <div style="display:flex;gap:12px;align-items:start;flex-wrap:wrap;margin-bottom:10px">
+            <div class="pill-group">
+              <input type="radio" name="bk_charge" id="ch_sales" value="영업" checked onchange="toggleChargeSel()"><label for="ch_sales">영업 담당</label>
+              <input type="radio" name="bk_charge" id="ch_nonsales" value="비영업" onchange="toggleChargeSel()"><label for="ch_nonsales">비영업 담당</label>
+            </div>
+          </div>
+          <div id="salesSelWrap">
+            <input type="text" id="charge_sales_sel" list="salesList" placeholder="소속 검색 또는 선택" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #ccc;border-radius:3px">
+            <datalist id="salesList">
+            <option value="1담당"><option value="1담당1본부"><option value="1담당1본부1팀"><option value="1담당1본부2팀"><option value="1담당2본부"><option value="1담당2본부1팀"><option value="1담당2본부2팀">
+            <option value="2담당"><option value="2담당1본부"><option value="2담당1본부1팀"><option value="2담당2본부"><option value="2담당2본부1팀"><option value="2담당2본부2팀"><option value="2담당2본부3팀">
+            <option value="3담당"><option value="3담당1본부"><option value="3담당1본부1팀"><option value="3담당1본부2팀"><option value="3담당1본부3팀"><option value="3담당1본부4팀"><option value="3담당2본부"><option value="3담당2본부1팀">
+            <option value="5담당"><option value="5담당1본부"><option value="5담당1본부1팀"><option value="5담당1본부2팀"><option value="5담당1본부3팀">
+            <option value="6담당"><option value="6담당1본부"><option value="6담당1본부1팀"><option value="6담당1본부2팀"><option value="6담당2본부"><option value="6담당2본부1팀"><option value="6담당2본부2팀"><option value="6담당2본부3팀">
+            <option value="7담당"><option value="7담당1본부"><option value="7담당1본부1팀"><option value="7담당1본부2팀"><option value="7담당2본부"><option value="7담당2본부1팀"><option value="7담당2본부2팀"><option value="7담당2본부3팀">
+            <option value="8담당"><option value="8담당1본부"><option value="8담당1본부1팀"><option value="8담당1본부2팀"><option value="8담당2본부"><option value="8담당2본부1팀"><option value="8담당2본부2팀"><option value="8담당2본부3팀">
+            <option value="9담당"><option value="9담당1본부"><option value="9담당1본부1팀"><option value="9담당1본부2팀"><option value="9담당2본부"><option value="9담당2본부1팀"><option value="9담당2본부2팀"><option value="9담당2본부3팀"><option value="9담당3본부"><option value="9담당3본부1팀">
+            </datalist>
+          </div>
+          <div id="nonsalesSelWrap" style="display:none">
+            <input type="text" id="charge_nonsales_sel" list="nonsalesList" placeholder="소속 검색 또는 선택" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #ccc;border-radius:3px">
+            <datalist id="nonsalesList">
+            <option value="1총괄부자재소싱팀"><option value="1총괄원단소싱1팀"><option value="1총괄원단소싱2팀"><option value="1총괄원부자재본부">
+            <option value="2총괄소싱1팀"><option value="2총괄소싱2팀"><option value="2총괄소싱3팀"><option value="2총괄원부자재본부">
+            <option value="3D팀"><option value="3총괄소싱1팀"><option value="3총괄소싱2팀"><option value="3총괄소싱3팀"><option value="3총괄원부자재본부">
+            <option value="C&S본부"><option value="C&S팀"><option value="CAD팀"><option value="CIC본부"><option value="COLOR팀"><option value="Compliance팀">
+            <option value="Design1본부"><option value="Design1본부1팀"><option value="Design1본부2팀"><option value="Design1본부3팀"><option value="Design1본부4팀">
+            <option value="Design2본부"><option value="Design2본부1팀"><option value="Design2본부2팀">
+            <option value="ESG팀"><option value="F&L본부"><option value="FABRIC R&D 1팀"><option value="FABRIC R&D 2팀"><option value="Finance본부">
+            <option value="Global Innovation 담당"><option value="HR본부"><option value="HR팀">
+            <option value="IT경영지원팀"><option value="IT본부"><option value="IT생산지원팀"><option value="IT영업지원팀">
+            <option value="Lab실"><option value="Logistics본부"><option value="ME팀"><option value="PPE생산기획담당"><option value="QA팀">
+            <option value="R&D TF팀"><option value="R&D본부"><option value="SCM본부"><option value="SCM팀"><option value="SI본부"><option value="SM본부">
+            <option value="Sustainability본부"><option value="Sustainability팀">
+            <option value="TD1팀"><option value="TD2팀"><option value="TD3팀"><option value="TD본부"><option value="Tax팀">
+            <option value="VERTICAL팀(GTM)"><option value="WI팀">
+            <option value="감사실"><option value="감사팀"><option value="개발팀"><option value="건설본부"><option value="견본팀">
+            <option value="경영기획본부"><option value="경영기획팀"><option value="경영정보팀"><option value="경영지원1담당"><option value="경영지원2담당"><option value="경영지원총괄">
+            <option value="공통"><option value="관세팀"><option value="교육팀"><option value="그래픽 디자인팀">
+            <option value="대표이사직속"><option value="디자인실"><option value="물류팀"><option value="미래기술연구소">
+            <option value="법무실"><option value="법무팀">
+            <option value="부자재소싱본부"><option value="부자재소싱본부1팀"><option value="부자재소싱본부2팀"><option value="부자재소싱본부3팀"><option value="부자재소싱본부4팀"><option value="부자재소싱팀">
+            <option value="부회장직속"><option value="사업혁신팀"><option value="생산1팀"><option value="생산2팀"><option value="생산지원담당"><option value="생산지원총괄">
+            <option value="선행기술팀"><option value="설비구매팀"><option value="설비기술팀"><option value="세아IS팀">
+            <option value="소싱&바잉담당"><option value="소싱&바잉담당 SI팀"><option value="소싱본부"><option value="소싱본부부자재팀"><option value="소싱본부원자재팀">
+            <option value="신사업1본부"><option value="신사업2본부"><option value="신사업총괄"><option value="신소재팀">
+            <option value="아인스1담당1본부PPE개발팀"><option value="아인스1담당부자재팀"><option value="아인스1담당원단소싱팀">
+            <option value="아인스2담당1본부PPE개발팀"><option value="아인스2담당영업지원본부">
+            <option value="아인스관리담당"><option value="아인스관리담당관리팀"><option value="아인스구매담당"><option value="아인스영업총괄 SI팀">
+            <option value="업무팀"><option value="영업2부문"><option value="영업3부문"><option value="영업지원본부"><option value="영업지원총괄">
+            <option value="우븐소싱팀"><option value="원가교육팀"><option value="원단관리팀"><option value="원단생산본부2팀"><option value="원단생산본부3팀"><option value="원단소싱팀"><option value="원단지원실">
+            <option value="원료구매팀"><option value="원료구매혁신본부"><option value="원사구매팀">
+            <option value="임원"><option value="자금팀"><option value="자동화사업팀">
+            <option value="재경본부"><option value="재무기획팀"><option value="재무팀">
+            <option value="전략기획본부"><option value="전략기획실"><option value="전략기획총괄"><option value="전략기획팀">
+            <option value="정보화사업팀"><option value="제조혁신팀"><option value="제품기획본부"><option value="지사.FABRIC MILL">
+            <option value="총무팀"><option value="패턴팀">
+            <option value="품질관리2팀"><option value="품질관리본부"><option value="품질관리총괄"><option value="품질관리팀">
+            <option value="해외관리1팀"><option value="해외관리2팀"><option value="해외관리3팀"><option value="해외관리본부">
+            <option value="해외생산1본부"><option value="해외생산1본부해외생산1팀"><option value="해외생산1본부해외생산2팀">
+            <option value="해외생산2본부"><option value="해외생산2본부해외생산1팀"><option value="해외생산담당"><option value="해외생산지원본부">
+            <option value="해외재무팀"><option value="해외지원총괄"><option value="홍보팀"><option value="화섬원사팀">
+            </datalist>
+          </div>
+        </td></tr>
+        <tr><td class="lbl">접수자명</td><td class="val"><input type="text" id="reg_name" placeholder="접수자명"></td></tr>
+        <tr><td class="lbl">연락처 TEL</td><td class="val"><input type="text" id="reg_tel" placeholder="02-XXXX-XXXX"></td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">접수 구분 Booking Overview</div>
+      <table class="tbl">
+        <tr><td class="lbl">TYPE<small>발송유형</small></td>
+        <td class="val">
+          <div class="pill-group">
+            <input type="radio" name="bk_type" id="type_out" value="OUT" checked onchange="updateCodePreview();onTypeChange();updateRoutes()"><label for="type_out">OUT</label>
+            <input type="radio" name="bk_type" id="type_in" value="IN" onchange="updateCodePreview();onTypeChange();updateRoutes()"><label for="type_in">IN</label>
+            <input type="radio" name="bk_type" id="type_3rd" value="3RD" onchange="updateCodePreview();onTypeChange();updateRoutes()"><label for="type_3rd">3RD</label>
+          </div>
+          <div class="hint">OUT: 국내→해외 / IN: 해외→국내 / 3RD: 제3국간</div>
+        </td></tr>
+        <tr><td class="lbl">HAND CARRY<small>업체 선택</small></td>
+        <td class="val">
+          <div class="pill-group">
+            <input type="radio" name="bk_carrier" id="cr_aci" value="ACI" checked onchange="updateCodePreview();updateRoutes()"><label for="cr_aci">ACI</label>
+            <input type="radio" name="bk_carrier" id="cr_dae" value="대선해운항공" onchange="updateCodePreview();updateRoutes()"><label for="cr_dae">대선해운항공</label>
+            <input type="radio" name="bk_carrier" id="cr_dal" value="DAL" onchange="updateCodePreview();updateRoutes()"><label for="cr_dal">DAL</label>
+            <input type="radio" name="bk_carrier" id="cr_air" value="에어비즈니스" onchange="updateCodePreview();updateRoutes()"><label for="cr_air">에어비즈니스</label>
+          </div>
+        </td></tr>
+        <tr><td class="lbl">SHIP FROM<small>출발지</small></td>
+        <td class="val"><select id="from_sel" onchange="updateToOptions()">
+          <option value="">::: 선택 하세요 :::</option>
+        </select></td></tr>
+        <tr><td class="lbl">SHIP TO<small>도착지</small></td>
+        <td class="val"><select id="to_sel">
+          <option value="">::: 선택 하세요 :::</option>
+        </select></td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">발송정보 Shipper Info</div>
+      <table class="tbl">
+        <tr><td class="lbl">이름(회사명)<small>Company Name</small></td>
+        <td class="val">
+          <input type="text" id="s_company_sel" list="companyList" placeholder="회사명 검색 또는 직접 입력" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #ccc;border-radius:3px">
+        </td></tr>
+        <tr><td class="lbl">담당자 이름<small>Contact Person</small></td><td class="val"><input type="text" id="s_person" placeholder="담당자 이름 입력"></td></tr>
+        <tr><td class="lbl">TEL</td><td class="val"><input type="text" id="s_tel" placeholder="연락처 입력"></td></tr>
+        <tr><td class="lbl">주소<small>Address</small></td>
+        <td class="val">
+          <input type="text" id="s_addr_sel" list="addrList" placeholder="주소 검색 또는 직접 입력" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #ccc;border-radius:3px">
+        </td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">수취정보 Receiver Info</div>
+      <table class="tbl">
+        <tr><td class="lbl">이름(회사명)<small>Company</small></td>
+        <td class="val">
+          <input type="text" id="r_company_sel" list="companyList" placeholder="회사명 검색 또는 직접 입력" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #ccc;border-radius:3px">
+        </td></tr>
+        <tr><td class="lbl">담당자 이름<small>Contact Person</small></td><td class="val"><input type="text" id="r_person" placeholder="수취인명 입력"></td></tr>
+        <tr><td class="lbl">TEL</td><td class="val"><input type="text" id="r_tel" placeholder="수취인 연락처 입력"></td></tr>
+        <tr><td class="lbl">주소<small>Address</small></td>
+        <td class="val">
+          <input type="text" id="r_addr_sel" list="addrList" placeholder="주소 검색 또는 직접 입력" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #ccc;border-radius:3px">
+        </td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">화물 정보 Shipment Details</div>
+      <table class="tbl">
+        <tr><td class="lbl">픽업희망일시<small>Pickup date</small></td>
+        <td class="val"><input type="date" id="pickup_date"></td></tr>
+
+        <tr><td class="lbl">화물 디테일<small>SHIPMENT DETAIL</small></td>
+        <td class="val">
+          <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#795548;line-height:1.6">
+            <b>⚠️ 인도네시아(ID) 발송 건의 경우,</b> C/T 총 개수 입력 후 <b>"IDN 발송 품목 DETAIL 입력"</b>을 사용하여 ITEM DETAIL, STYLE#, 혼용률, 개당 VALUE를 필수로 입력하여 주시기 바랍니다.
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+            <div class="field-label" style="margin:0">C/T 총 개수</div>
+            <input type="number" id="ct_count" value="1" min="1" style="width:70px">
+            <button type="button" onclick="addCtRow()" style="padding:4px 14px;font-size:11px;border:1px solid #4A90D9;color:#4A90D9;background:#fff;border-radius:3px;cursor:pointer">+ C/T 행 추가</button>
+            <span style="color:#ccc;font-size:11px">|</span>
+            <button type="button" onclick="openExcelInput()" style="padding:4px 14px;font-size:11px;border:1px solid #2a7ae2;color:#2a7ae2;background:#fff;border-radius:3px;cursor:pointer">📊 IDN 발송 품목 DETAIL 입력</button>
+            <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#555;cursor:pointer;margin-left:4px;border:1px solid #ccc;padding:3px 10px;border-radius:3px"><input type="checkbox" id="chkSameDetail" onchange="applySameDetail()" style="accent-color:#4A90D9"> 물품 디테일 모두 동일</label>
+            <span id="uploadFileName" style="font-size:10px;color:#888"></span>
+          </div>
+          <div id="ctRows">
+            <div class="ct-row" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:10px;margin-bottom:6px">
+              <div style="font-size:11px;font-weight:700;color:#4A90D9;margin-bottom:6px">C/T #1</div>
+              <div class="row" style="margin-bottom:6px">
+                <div><div class="field-label">Item Type</div><select class="ct-item-type"><option value="">:::</option><option value="ETC">ETC</option><option value="ACC">ACC</option><option value="FAB">FAB</option></select></div>
+                <div><div class="field-label">Style No</div><input type="text" class="ct-style" placeholder="Style No"></div>
+              </div>
+              <div class="row" style="margin-bottom:6px">
+                <div><div class="field-label">중량 (KG)</div><input type="text" class="ct-weight" placeholder="ex) 15.5"></div>
+                <div><div class="field-label">VALUE (단가)</div><input type="text" class="ct-value" placeholder="ex) USD 1"></div>
+              </div>
+              <div><div class="field-label">Item Detail <span style="color:#4A90D9;font-size:10px">(인도네시아 발송 건은 혼용률 필수기재 필요)</span></div><input type="text" class="ct-detail" placeholder="ex) POLY 95% NYLON 5% FABRIC"></div>
+            </div>
+          </div>
+        </td></tr>
+
+        <tr><td class="lbl">메모사항<small>Memo</small></td>
+        <td class="val"><textarea id="memo" class="memo-area" placeholder="픽업 장소, 특이사항 등 메모를 입력하세요"></textarea></td></tr>
+
+        <tr><td class="lbl">REMARK<small>업체별 픽업 마감</small></td>
+        <td class="val">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;text-align:center">
+            <thead>
+              <tr style="background:#f0f0f0">
+                <th style="border:1px solid #ccc;padding:6px;font-weight:700">업체명</th>
+                <th style="border:1px solid #ccc;padding:6px;font-weight:700">월요일 ~ 금요일</th>
+                <th style="border:1px solid #ccc;padding:6px;font-weight:700">토</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="border:1px solid #ddd;padding:6px;font-weight:700">DAL<br><span style="font-weight:400;font-size:10px;color:#888">02-2666-5307</span></td>
+                <td style="border:1px solid #ddd;padding:6px">월~목: 오후 2:00</td>
+                <td style="border:1px solid #ddd;padding:6px">금~토: 토요일 오전 11:00</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:6px;font-weight:700">ABC (에어비즈니스)<br><span style="font-weight:400;font-size:10px;color:#888">02-334-0116</span></td>
+                <td style="border:1px solid #ddd;padding:6px">오후 1:30</td>
+                <td style="border:1px solid #ddd;padding:6px">오전 11시30분</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:6px;font-weight:700">대선<br><span style="font-weight:400;font-size:10px;color:#888">02-713-7419</span></td>
+                <td style="border:1px solid #ddd;padding:6px">오후 2:00</td>
+                <td style="border:1px solid #ddd;padding:6px">오후 12:00</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:6px;font-weight:700">ACI<br><span style="font-weight:400;font-size:10px;color:#888">1588-0300</span></td>
+                <td style="border:1px solid #ddd;padding:6px">월~금: 11:30</td>
+                <td style="border:1px solid #ddd;padding:6px">토요일 픽업 및 배송 휴무</td>
+              </tr>
+            </tbody>
+          </table>
+        </td></tr>
+
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <div id="blPreview" style="background:#f9f0f3;border:1px dashed #4A90D9;border-radius:4px;padding:14px 20px;margin-bottom:16px;text-align:center;max-width:420px;margin-left:auto;margin-right:auto">
+        <div style="font-size:11px;color:#888;margin-bottom:6px">세아 EXPRESS CODE 자동생성 예시 (SAVE 시 확정)</div>
+        <div id="blPreviewNo" style="font-size:20px;font-weight:700;color:#4A90D9;letter-spacing:2px">SAE-ACI-O-260701-001</div>
+        <div style="font-size:10px;color:#999;margin-top:6px">SAE-[업체코드]-[TYPE]-[날짜]-[순번] → 쉬핑마크로 화물에 부착</div>
+      </div>
+      <button class="btn-save" onclick="handleSave()">발송예약 SAVE</button>
+    </div>
+  </div>
+
+  <!-- ========== 발송의뢰 조회 ========== -->
+  <div class="list-section" id="listSection">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="showTab('form')" style="background:#8b7355;color:#fff;border:none;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">등록하기 Registration</button>
+        <button onclick="saveListEdits()" style="background:#2a7ae2;color:#fff;border:none;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">선택 항목 SAVE</button>
+        <button onclick="downloadIdnBulk()" style="background:#28a745;color:#fff;border:none;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">📥 IDN DETAIL 일괄 다운로드</button>
+        <button onclick="downloadPickupList()" style="background:#ff8c00;color:#fff;border:none;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">📋 픽업 리스트 다운로드</button>
+      </div>
+    </div>
+    <div style="background:#f7f7f7;border:1px solid #e0e0e0;border-radius:4px;padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:end">
+      <div>
+        <div class="field-label">픽업 날짜</div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input type="date" id="srcDateFrom" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:130px">
+          <span style="font-size:11px">~</span>
+          <input type="date" id="srcDateTo" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:130px">
+        </div>
+      </div>
+      <div>
+        <div class="field-label">구간 (FROM → TO)</div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <select id="srcFrom" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:90px">
+            <option value="">전체</option>
+            <option value="KR">KR</option><option value="CN">CN</option><option value="ID">ID</option><option value="BD">BD</option><option value="VN">VN</option><option value="HCM">HCM</option><option value="HAN">HAN</option><option value="DAD">DAD</option>
+          </select>
+          <span style="font-size:11px">→</span>
+          <select id="srcTo" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:90px">
+            <option value="">전체</option>
+            <option value="KR">KR</option><option value="ID">ID</option><option value="BD">BD</option><option value="VN">VN</option><option value="HCM">HCM</option><option value="HAN">HAN</option><option value="DAD">DAD</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">영업 담당</div>
+        <select id="srcCharge" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:140px">
+          <option value="">전체</option>
+          <option>1담당</option><option>2담당</option><option>3담당</option><option>5담당</option><option>6담당</option><option>7담당</option><option>8담당</option><option>9담당</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">발송자 이름</div>
+        <input type="text" id="srcSender" placeholder="발송 담당자명" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:110px">
+      </div>
+      <div>
+        <div class="field-label">수취회사</div>
+        <input type="text" id="srcReceiver" placeholder="수취회사명" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:110px">
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="renderList()" style="background:#4A90D9;color:#fff;border:none;padding:6px 18px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">검색</button>
+        <button onclick="resetSearch()" style="background:#eee;color:#333;border:none;padding:6px 14px;font-size:12px;cursor:pointer;border-radius:3px">초기화</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th style="width:30px"><input type="checkbox" id="checkAll" onchange="toggleCheckAll()"></th>
+          <th>준비일시<br><small>Pickup date and time</small></th>
+          <th>세아 EXPRESS CODE</th>
+          <th>운송장번호 BL NO<br><small style="color:#ffc107">(업체 입력)</small></th>
+          <th>C/T 개수<br><small style="color:#ffc107">(업체 입력)</small></th>
+          <th>중량(KG)<br><small style="color:#ffc107">(업체 입력)</small></th>
+          <th>중량 증빙<br><small style="color:#ffc107">(업체 업로드)</small></th>
+          <th>SHIPPING<br>MARK PRINT</th>
+          <th>IDN<br>DETAIL</th>
+          <th>담당<br><small>(운임 부담)</small></th>
+          <th>SHIP<br>FROM</th>
+          <th>SHIP<br>TO</th>
+          <th>발송자</th>
+          <th>발송회사</th>
+          <th>수취인</th>
+          <th>수취회사</th>
+          <th>STYLE NO</th>
+          <th>ITEM DETAIL<br><small>(품명)</small></th>
+          <th>수량</th>
+          <th>중량</th>
+          <th>메모</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody id="listBody">
+      </tbody>
+    </table>
+    </div>
+    <div class="empty-msg" id="emptyMsg">접수된 예약이 없습니다.</div>
+  </div>
+
+  <!-- ========== 발송 리스트 다운로드 ========== -->
+  <div class="list-section" id="downloadSection">
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#856404">
+      🔒 본 화면은 <b>물류팀 및 핸드캐리 업체</b> 전용입니다.
+    </div>
+
+    <div style="background:#f7f7f7;border:1px solid #e0e0e0;border-radius:4px;padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:end">
+      <div>
+        <div class="field-label">픽업일자 (개별)</div>
+        <input type="date" id="dlDate" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:140px">
+      </div>
+      <div style="color:#999;font-size:11px;padding-bottom:6px">또는</div>
+      <div>
+        <div class="field-label">픽업일자 (기간)</div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input type="date" id="dlDateFrom" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:130px">
+          <span style="font-size:11px">~</span>
+          <input type="date" id="dlDateTo" style="padding:5px 6px;font-size:11px;border:1px solid #ccc;border-radius:3px;width:130px">
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="renderDownloadList()" style="background:#4A90D9;color:#fff;border:none;padding:6px 18px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">조회</button>
+        <button onclick="resetDlSearch()" style="background:#eee;color:#333;border:none;padding:6px 14px;font-size:12px;cursor:pointer;border-radius:3px">초기화</button>
+        <button onclick="exportDownloadList()" style="background:#28a745;color:#fff;border:none;padding:6px 18px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">📥 엑셀 다운로드</button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th>NO</th>
+          <th>CLOSE MONTH<br><small>(마감월)</small></th>
+          <th>운임부담</th>
+          <th>TYPE</th>
+          <th>픽업일자</th>
+          <th>BL NO</th>
+          <th>SHIP FROM</th>
+          <th>SHIP TO</th>
+          <th>FACTORY<br><small>(발송회사)</small></th>
+          <th>SENDER<br><small>(발송자)</small></th>
+          <th>CONSIGNEE<br><small>(수취회사)</small></th>
+          <th>RECEIVER<br><small>(수취인)</small></th>
+          <th>CARTON NO<br><small>(발송개수)</small></th>
+          <th>WEIGHT TON<br><small>(중량)</small></th>
+          <th>REMARK</th>
+        </tr>
+      </thead>
+      <tbody id="dlBody">
+      </tbody>
+    </table>
+    </div>
+    <div class="empty-msg" id="dlEmptyMsg">조회된 데이터가 없습니다.</div>
+  </div>
+
+  <datalist id="companyList">
+    <option value="SAE-A TRADING CO., LTD">
+    <option value="ACI EXPRESS LAX"><option value="ACI EXPRESS NYC"><option value="ACI EXPRESS LONDON">
+    <option value="ACI EXPRESS SHANGHAI"><option value="ACI EXPRESS HONG KONG"><option value="ACI EXPRESS TOKYO">
+    <option value="ACI EXPRESS DHAKA"><option value="ACI EXPRESS HOCHIMINH"><option value="ACI EXPRESS PHNOM PENH">
+    <option value="PT.CITRA ABADI SEJATI"><option value="KB TRADING">
+  </datalist>
+  <datalist id="addrList">
+    <option value="1F, 429 Yeongdong-daero, Gangnam-gu Seoul Korea.">
+  </datalist>
+
+  <div class="footer">© SAE-A TRADING CO., LTD — 핸드캐리 발송예약 시스템</div>
+</div>
+
+<script>
+var bookings = JSON.parse(localStorage.getItem('saea_bookings') || '[]');
+
+function showTab(tab) {
+  var btns = document.querySelectorAll('.tab-bar button');
+  btns[0].classList.toggle('active', tab === 'form');
+  btns[1].classList.toggle('active', tab === 'list');
+  btns[2].classList.toggle('active', tab === 'download');
+  document.getElementById('formSection').classList.toggle('hidden', tab !== 'form');
+  document.getElementById('listSection').classList.toggle('active', tab === 'list');
+  document.getElementById('downloadSection').classList.toggle('active', tab === 'download');
+  document.querySelector('.wrap').classList.toggle('full-width', tab !== 'form');
+  if (tab === 'list') renderList();
+  if (tab === 'download') renderDownloadList();
+}
+
+function openDownloadTab() {
+  var pw = prompt('🔒 물류팀 / 핸드캐리 업체 전용 화면입니다.\n접근 비밀번호를 입력하세요:');
+  if (pw === 'saea2026' || pw === 'logistics') {
+    showTab('download');
+  } else if (pw !== null) {
+    alert('비밀번호가 올바르지 않습니다.');
+  }
+}
+
+function toggleManual(prefix) {
+  var sel = document.getElementById(prefix + '_sel');
+  var txt = document.getElementById(prefix + '_txt');
+  if (txt.style.display === 'none') { txt.style.display = 'block'; sel.style.display = 'none'; }
+  else { txt.style.display = 'none'; sel.style.display = ''; }
+}
+
+function toggleChargeSel() {
+  var isSales = document.getElementById('ch_sales').checked;
+  document.getElementById('salesSelWrap').style.display = isSales ? '' : 'none';
+  document.getElementById('nonsalesSelWrap').style.display = isSales ? 'none' : '';
+}
+
+var codeLabels = {KR:'한국 (KR)',CN:'중국 (CN)',ID:'인도네시아 (ID)',BD:'방글라데시 (BD)',VN:'베트남 (VN)',HCM:'베트남 - 호치민 (HCM)',HAN:'베트남 - 하노이 (HAN)',DAD:'베트남 - 다낭 (DAD)'};
+
+var routeConfig = [
+  {type:'OUT',carrier:'대선해운항공',from:'KR',to:'CN'},
+  {type:'OUT',carrier:'ACI',from:'KR',to:'BD'},
+  {type:'OUT',carrier:'DAL',from:'KR',to:'ID'},
+  {type:'OUT',carrier:'에어비즈니스',from:'KR',to:'HCM'},
+  {type:'OUT',carrier:'대선해운항공',from:'KR',to:'HAN'},
+  {type:'OUT',carrier:'대선해운항공',from:'KR',to:'DAD'},
+  {type:'IN',carrier:'ACI',from:'BD',to:'KR'},
+  {type:'IN',carrier:'대선해운항공',from:'CN',to:'KR'},
+  {type:'IN',carrier:'DAL',from:'ID',to:'KR'},
+  {type:'IN',carrier:'대선해운항공',from:'HAN',to:'KR'},
+  {type:'IN',carrier:'대선해운항공',from:'DAD',to:'KR'},
+  {type:'IN',carrier:'에어비즈니스',from:'HCM',to:'KR'},
+  {type:'3RD',carrier:'에어비즈니스',from:'HCM',to:'KR'},
+  {type:'3RD',carrier:'에어비즈니스',from:'ID',to:'HCM'},
+  {type:'3RD',carrier:'에어비즈니스',from:'ID',to:'HAN'},
+  {type:'3RD',carrier:'에어비즈니스',from:'ID',to:'DAD'},
+  {type:'3RD',carrier:'대선해운항공',from:'DAD',to:'ID'},
+  {type:'3RD',carrier:'대선해운항공',from:'DAD',to:'HAN'},
+  {type:'3RD',carrier:'대선해운항공',from:'DAD',to:'HCM'},
+  {type:'3RD',carrier:'대선해운항공',from:'HAN',to:'ID'},
+  {type:'3RD',carrier:'대선해운항공',from:'HCM',to:'ID'},
+  {type:'3RD',carrier:'에어비즈니스',from:'HCM',to:'HAN'},
+  {type:'3RD',carrier:'대선해운항공',from:'HAN',to:'HCM'}
+];
+
+function updateRoutes() {
+  var type = document.querySelector('input[name=bk_type]:checked').value;
+  var carrier = document.querySelector('input[name=bk_carrier]:checked').value;
+  var matches = routeConfig.filter(function(r) { return r.type === type && r.carrier === carrier; });
+  var fromSet = {};
+  matches.forEach(function(r) { fromSet[r.from] = true; });
+  var fromSel = document.getElementById('from_sel');
+  fromSel.innerHTML = '<option value="">::: 선택 하세요 :::</option>';
+  Object.keys(fromSet).sort().forEach(function(code) {
+    fromSel.innerHTML += '<option value="' + code + '">' + (codeLabels[code] || code) + '</option>';
+  });
+  updateToOptions();
+}
+
+function updateToOptions() {
+  var type = document.querySelector('input[name=bk_type]:checked').value;
+  var carrier = document.querySelector('input[name=bk_carrier]:checked').value;
+  var from = document.getElementById('from_sel').value;
+  var matches = routeConfig.filter(function(r) {
+    return r.type === type && r.carrier === carrier && (!from || r.from === from);
+  });
+  var toSet = {};
+  matches.forEach(function(r) { toSet[r.to] = true; });
+  var toSel = document.getElementById('to_sel');
+  toSel.innerHTML = '<option value="">::: 선택 하세요 :::</option>';
+  Object.keys(toSet).sort().forEach(function(code) {
+    toSel.innerHTML += '<option value="' + code + '">' + (codeLabels[code] || code) + '</option>';
+  });
+}
+
+function onTypeChange() {
+  var type = document.querySelector('input[name=bk_type]:checked').value;
+  var sComp = document.getElementById('s_company_sel');
+  var sAddr = document.getElementById('s_addr_sel');
+  var rComp = document.getElementById('r_company_sel');
+  var rAddr = document.getElementById('r_addr_sel');
+
+  if (type === 'OUT') {
+    sComp.value = 'SAE-A TRADING CO., LTD';
+    sAddr.value = '1F, 429 Yeongdong-daero, Gangnam-gu Seoul Korea.';
+    sComp.readOnly = false;
+    rComp.value = '';
+    rAddr.value = '';
+    rComp.placeholder = '수취회사명 검색 또는 직접 입력';
+    rAddr.placeholder = '수취 주소 입력';
+  } else if (type === 'IN') {
+    sComp.value = '';
+    sAddr.value = '';
+    sComp.readOnly = false;
+    sComp.placeholder = '발송회사명 검색 또는 직접 입력';
+    sAddr.placeholder = '발송 주소 입력';
+    rComp.value = 'SAE-A TRADING CO., LTD';
+    rAddr.value = '1F, 429 Yeongdong-daero, Gangnam-gu Seoul Korea.';
+  } else if (type === '3RD') {
+    sComp.value = '';
+    sAddr.value = '';
+    sComp.readOnly = false;
+    sComp.placeholder = '발송회사명 검색 또는 직접 입력';
+    sAddr.placeholder = '발송 주소 입력';
+    rComp.value = '';
+    rAddr.value = '';
+    rComp.placeholder = '수취회사명 검색 또는 직접 입력';
+    rAddr.placeholder = '수취 주소 입력';
+  }
+}
+
+function onCompanySel(prefix) {
+  var sel = document.getElementById(prefix + '_company_sel');
+  var txt = document.getElementById(prefix === 's' ? 's_company' : 'r_company_txt');
+  if (sel.value === '__manual__') { txt.style.display = 'block'; txt.focus(); }
+  else { txt.style.display = 'none'; }
+}
+
+function onAddrSel(prefix) {
+  var sel = document.getElementById(prefix + '_addr_sel');
+  var txt = document.getElementById(prefix + '_addr');
+  if (sel.value === '__manual__') { txt.style.display = 'block'; txt.focus(); }
+  else { txt.style.display = 'none'; }
+}
+
+function addCtRow() {
+  var container = document.getElementById('ctRows');
+  var num = container.querySelectorAll('.ct-row').length + 1;
+  var div = document.createElement('div');
+  div.className = 'ct-row';
+  div.style.cssText = 'background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:10px;margin-bottom:6px;position:relative';
+  div.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#4A90D9">C/T #' + num + '</div><button type="button" onclick="this.closest(\'.ct-row\').remove();reNumberCt()" style="font-size:10px;border:none;background:none;color:#999;cursor:pointer">✕ 삭제</button></div>'
+    + '<div class="row" style="margin-bottom:6px"><div><div class="field-label">Item Type</div><select class="ct-item-type"><option value="">:::</option><option value="ETC">ETC</option><option value="ACC">ACC</option><option value="FAB">FAB</option></select></div><div><div class="field-label">Style No</div><input type="text" class="ct-style" placeholder="Style No"></div></div>'
+    + '<div class="row" style="margin-bottom:6px"><div><div class="field-label">중량 (KG)</div><input type="text" class="ct-weight" placeholder="ex) 15.5"></div><div><div class="field-label">VALUE (단가)</div><input type="text" class="ct-value" placeholder="ex) USD 1"></div></div>'
+    + '<div><div class="field-label">Item Detail <span style="color:#4A90D9;font-size:10px">(인도네시아 발송 건은 혼용률 필수기재 필요)</span></div><input type="text" class="ct-detail" placeholder="ex) POLY 95% NYLON 5% FABRIC"></div>';
+  container.appendChild(div);
+  document.getElementById('ct_count').value = num;
+}
+
+function reNumberCt() {
+  var rows = document.querySelectorAll('.ct-row');
+  rows.forEach(function(r, i) {
+    r.querySelector('div[style*="color:#4A90D9"], div[style*="color:#2a7ae2"]').childNodes[0].textContent = 'C/T #' + (i + 1) + ' ';
+  });
+  document.getElementById('ct_count').value = rows.length;
+}
+
+function applySameDetail() {
+  var checked = document.getElementById('chkSameDetail').checked;
+  if (!checked) return;
+  var rows = document.querySelectorAll('.ct-row');
+  if (rows.length < 2) return;
+  var first = rows[0];
+  var srcType = first.querySelector('.ct-item-type').value;
+  var srcStyle = first.querySelector('.ct-style').value;
+  var srcWeight = first.querySelector('.ct-weight').value;
+  var srcValue = first.querySelector('.ct-value').value;
+  var srcDetail = first.querySelector('.ct-detail').value;
+  for (var i = 1; i < rows.length; i++) {
+    rows[i].querySelector('.ct-item-type').value = srcType;
+    rows[i].querySelector('.ct-style').value = srcStyle;
+    rows[i].querySelector('.ct-weight').value = srcWeight;
+    rows[i].querySelector('.ct-value').value = srcValue;
+    rows[i].querySelector('.ct-detail').value = srcDetail;
+  }
+  alert('C/T #1의 내용이 나머지 ' + (rows.length - 1) + '개 행에 복사되었습니다.');
+}
+
+function getCtData() {
+  var rows = document.querySelectorAll('.ct-row');
+  var data = [];
+  rows.forEach(function(r) {
+    data.push({
+      item_type: r.querySelector('.ct-item-type').value,
+      style_no: r.querySelector('.ct-style').value,
+      weight: r.querySelector('.ct-weight').value,
+      value: r.querySelector('.ct-value').value,
+      detail: r.querySelector('.ct-detail').value
+    });
+  });
+  return data;
+}
+
+function parseShippingMark(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  document.getElementById('uploadFileName').textContent = '📄 ' + file.name;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var workbook = XLSX.read(e.target.result, {type:'array'});
+      var sheet = workbook.Sheets[workbook.SheetNames[0]];
+      var json = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+
+      // 헤더 행 찾기 (DETAIL 재질 or STYLE 포함된 행)
+      var headerIdx = -1;
+      for (var i = 0; i < Math.min(json.length, 15); i++) {
+        var rowStr = json[i].join(' ').toLowerCase();
+        if (rowStr.indexOf('detail') >= 0 || rowStr.indexOf('style') >= 0 || rowStr.indexOf('재질') >= 0) {
+          headerIdx = i;
+          break;
+        }
+      }
+      if (headerIdx < 0) { alert('엑셀 양식을 인식할 수 없습니다.\nDETAIL/STYLE 헤더가 포함된 표준 양식을 사용해주세요.'); return; }
+
+      // 데이터 행 파싱
+      var items = [];
+      for (var r = headerIdx + 1; r < json.length; r++) {
+        var row = json[r];
+        var no = String(row[0] || '').trim();
+        var detail = String(row[1] || '').trim();   // 재질(혼용률)
+        var style = String(row[4] || '').trim();     // STYLE/ITEM NO.
+        var desc = String(row[6] || '').trim();      // DESCRIPTION OF GOODS
+        var qty = String(row[10] || '').trim();      // QUANTITY
+
+        // 빈 행이거나 메타 데이터(위기재사항, TOTAL 등) 건너뛰기
+        if (!detail && !style && !desc) continue;
+        if (desc.indexOf('위기재') >= 0 || (row[10] && String(row[10]).indexOf('TOTAL') >= 0)) continue;
+
+        // Item Type 자동 추정
+        var itemType = 'ETC';
+        var lowerDetail = (detail + ' ' + desc).toLowerCase();
+        if (lowerDetail.indexOf('fabric') >= 0 || lowerDetail.indexOf('poly') >= 0 || lowerDetail.indexOf('nylon') >= 0 || lowerDetail.indexOf('cotton') >= 0) itemType = 'FAB';
+        else if (lowerDetail.indexOf('acc') >= 0 || lowerDetail.indexOf('button') >= 0 || lowerDetail.indexOf('zipper') >= 0 || lowerDetail.indexOf('label') >= 0) itemType = 'ACC';
+
+        items.push({
+          item_type: itemType,
+          style_no: style,
+          detail: desc || detail,
+          weight: '',
+          value: '',
+          qty: qty
+        });
+      }
+
+      if (!items.length) { alert('파싱 가능한 데이터 행이 없습니다.'); return; }
+
+      // 기존 C/T 행 모두 제거 후 새로 생성
+      var container = document.getElementById('ctRows');
+      container.innerHTML = '';
+
+      items.forEach(function(item, idx) {
+        var div = document.createElement('div');
+        div.className = 'ct-row';
+        div.style.cssText = 'background:#f0f7ff;border:1px solid #c5ddf5;border-radius:4px;padding:10px;margin-bottom:6px;position:relative';
+        div.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#2a7ae2">C/T #' + (idx+1) + ' <span style="font-size:9px;color:#888;font-weight:400">(엑셀 자동입력)</span></div><button type="button" onclick="this.closest(\'.ct-row\').remove();reNumberCt()" style="font-size:10px;border:none;background:none;color:#999;cursor:pointer">✕ 삭제</button></div>'
+          + '<div class="row" style="margin-bottom:6px"><div><div class="field-label">Item Type</div><select class="ct-item-type"><option value="">:::</option><option value="ETC"' + (item.item_type==='ETC'?' selected':'') + '>ETC</option><option value="ACC"' + (item.item_type==='ACC'?' selected':'') + '>ACC</option><option value="FAB"' + (item.item_type==='FAB'?' selected':'') + '>FAB</option></select></div><div><div class="field-label">Style No</div><input type="text" class="ct-style" value="' + item.style_no + '"></div></div>'
+          + '<div class="row" style="margin-bottom:6px"><div><div class="field-label">중량 (KG)</div><input type="text" class="ct-weight" placeholder="직접 입력"></div><div><div class="field-label">VALUE (단가)</div><input type="text" class="ct-value" placeholder="직접 입력"></div></div>'
+          + '<div><div class="field-label">Item Detail <span style="color:#4A90D9;font-size:10px">(인도네시아 발송 건은 혼용률 필수기재 필요)</span></div><input type="text" class="ct-detail" value="' + item.detail.replace(/"/g,'&quot;') + '"></div>';
+        container.appendChild(div);
+      });
+
+      document.getElementById('ct_count').value = items.length;
+      alert('엑셀에서 ' + items.length + '건의 C/T 항목을 불러왔습니다.\n\n중량(KG)과 VALUE(단가)는 직접 입력해주세요.');
+
+    } catch(err) {
+      alert('엑셀 파일 파싱 중 오류가 발생했습니다.\n' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+function openExcelInput() {
+  var overlay = document.getElementById('markOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'markOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+
+  // 기존 C/T 데이터 가져오기
+  var existing = getCtData();
+  var initRows = existing.length > 0 ? existing : [{item_type:'',style_no:'',weight:'',value:'',detail:''}];
+
+  var rowsHtml = '';
+  initRows.forEach(function(item, i) {
+    rowsHtml += excelRowHtml(i + 1, item);
+  });
+
+  overlay.innerHTML = '<div style="background:#fff;border-radius:8px;max-width:95vw;width:1100px;max-height:92vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)">'
+    + '<div style="background:#2a7ae2;color:#fff;padding:12px 20px;font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0">'
+    + '<span>📊 SHIPPING MARK 입력</span>'
+    + '<span onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="cursor:pointer;font-size:20px;line-height:1">✕</span></div>'
+    + '<div style="padding:16px;overflow-x:auto">'
+    + '<table id="excelTable" style="width:100%;border-collapse:collapse;font-size:11px;min-width:900px">'
+    + '<thead><tr style="background:#f0f0f0">'
+    + '<th style="border:1px solid #ccc;padding:6px;width:30px">NO</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:130px">DETAIL 재질(혼용률)</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:70px">ORIGIN</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:130px">STYLE/ITEM NO.</th>'
+    + '<th style="border:1px solid #ccc;padding:6px">DESCRIPTION OF GOODS</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:70px">중량(KG)</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:90px">VALUE(단가)</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:60px">QUANTITY</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:50px">UNIT</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:80px">C/T</th>'
+    + '<th style="border:1px solid #ccc;padding:6px;width:30px"></th>'
+    + '</tr></thead>'
+    + '<tbody id="excelBody">' + rowsHtml + '</tbody>'
+    + '<tfoot><tr style="background:#f7f7f7;font-weight:700">'
+    + '<td colspan="5" style="border:1px solid #ccc;padding:6px;text-align:right">TOTAL</td>'
+    + '<td style="border:1px solid #ccc;padding:6px;text-align:center" id="exTotalWeight">-</td>'
+    + '<td style="border:1px solid #ccc;padding:6px;text-align:center" id="exTotalValue">-</td>'
+    + '<td style="border:1px solid #ccc;padding:6px;text-align:center" id="exTotalQty">-</td>'
+    + '<td style="border:1px solid #ccc;padding:6px"></td>'
+    + '<td style="border:1px solid #ccc;padding:6px;text-align:center;font-weight:700" id="exTotalCt">-</td>'
+    + '<td colspan="2" style="border:1px solid #ccc;padding:6px"></td>'
+    + '</tr></tfoot>'
+    + '</table>'
+    + '<div style="margin-top:10px;display:flex;gap:8px">'
+    + '<button onclick="addExcelRow()" style="padding:6px 16px;font-size:11px;border:1px solid #2a7ae2;color:#2a7ae2;background:#fff;border-radius:3px;cursor:pointer">+ 행 추가</button>'
+    + '<button onclick="addExcelRows5()" style="padding:6px 16px;font-size:11px;border:1px solid #888;color:#888;background:#fff;border-radius:3px;cursor:pointer">+ 5행 추가</button>'
+    + '</div>'
+    + '</div>'
+    + '<div style="text-align:center;padding:16px;border-top:1px solid #eee">'
+    + '<button onclick="applyExcelData()" style="padding:10px 40px;font-size:14px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:#2a7ae2;color:#fff;margin-right:8px">적용하기</button>'
+    + '<button onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="padding:10px 30px;font-size:14px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:#eee;color:#333">취소</button>'
+    + '</div></div>';
+}
+
+function excelRowHtml(num, item) {
+  return '<tr>'
+    + '<td style="border:1px solid #ddd;padding:4px;text-align:center;color:#888">' + num + '</td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-detail" value="' + (item.detail||'').replace(/"/g,'&quot;') + '" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-origin" value="KOREA" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent;text-align:center"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-style" value="' + (item.style_no||'').replace(/"/g,'&quot;') + '" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-desc" value="' + (item.detail||'').replace(/"/g,'&quot;') + '" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-weight" value="' + (item.weight||'') + '" oninput="calcExcelTotal()" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent;text-align:center"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-value" value="' + (item.value||'') + '" oninput="calcExcelTotal()" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent;text-align:center"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-qty" value="1" oninput="calcExcelTotal()" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent;text-align:center"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="text" class="ex-unit" value="PCS" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent;text-align:center"></td>'
+    + '<td style="border:1px solid #ddd;padding:2px"><input type="number" class="ex-ct" value="1" min="1" oninput="calcExcelTotal()" style="width:100%;border:none;padding:4px;font-size:11px;background:transparent;text-align:center"></td>'
+    + '<td style="border:1px solid #ddd;padding:4px;text-align:center"><span onclick="this.closest(\'tr\').remove();reNumberExcel()" style="cursor:pointer;color:#ccc;font-size:12px">✕</span></td>'
+    + '</tr>';
+}
+
+function addExcelRow() {
+  var body = document.getElementById('excelBody');
+  var num = body.querySelectorAll('tr').length + 1;
+  body.insertAdjacentHTML('beforeend', excelRowHtml(num, {}));
+  calcExcelTotal();
+}
+
+function addExcelRows5() { for(var i=0;i<5;i++) addExcelRow(); }
+
+function reNumberExcel() {
+  var rows = document.getElementById('excelBody').querySelectorAll('tr');
+  rows.forEach(function(r, i) { r.cells[0].textContent = i + 1; });
+  calcExcelTotal();
+}
+
+function calcExcelTotal() {
+  var rows = document.getElementById('excelBody').querySelectorAll('tr');
+  var totalW = 0, totalV = 0, totalQ = 0;
+  var ctSet = {};
+  rows.forEach(function(r) {
+    var w = parseFloat(r.querySelector('.ex-weight').value) || 0;
+    var v = parseFloat(r.querySelector('.ex-value').value.replace(/[^0-9.]/g,'')) || 0;
+    var q = parseFloat(r.querySelector('.ex-qty').value) || 0;
+    var ct = r.querySelector('.ex-ct').value.trim();
+    if (ct) ctSet[ct] = true;
+    totalW += w;
+    totalV += v * q;
+    totalQ += q;
+  });
+  var ctCount = Object.keys(ctSet).length;
+  document.getElementById('exTotalWeight').textContent = totalW ? totalW.toFixed(2) : '-';
+  document.getElementById('exTotalValue').textContent = totalV ? totalV.toFixed(2) : '-';
+  document.getElementById('exTotalQty').textContent = totalQ || '-';
+  var ctCell = document.getElementById('exTotalCt');
+  if (ctCell) ctCell.textContent = ctCount ? ctCount + ' C/T' : '-';
+}
+
+function applyExcelData() {
+  var rows = document.getElementById('excelBody').querySelectorAll('tr');
+  var items = [];
+  rows.forEach(function(r) {
+    var detail = r.querySelector('.ex-detail').value.trim();
+    var desc = r.querySelector('.ex-desc').value.trim();
+    var style = r.querySelector('.ex-style').value.trim();
+    var weight = r.querySelector('.ex-weight').value.trim();
+    var val = r.querySelector('.ex-value').value.trim();
+    if (!detail && !desc && !style) return; // 빈 행 무시
+
+    var itemType = 'ETC';
+    var lower = (detail + ' ' + desc).toLowerCase();
+    if (lower.indexOf('fabric') >= 0 || lower.indexOf('poly') >= 0 || lower.indexOf('nylon') >= 0 || lower.indexOf('cotton') >= 0) itemType = 'FAB';
+    else if (lower.indexOf('acc') >= 0 || lower.indexOf('button') >= 0 || lower.indexOf('zipper') >= 0 || lower.indexOf('label') >= 0) itemType = 'ACC';
+
+    items.push({ item_type: itemType, style_no: style, detail: desc || detail, weight: weight, value: val });
+  });
+
+  if (!items.length) { alert('입력된 데이터가 없습니다.'); return; }
+
+  var container = document.getElementById('ctRows');
+  container.innerHTML = '';
+  items.forEach(function(item, idx) {
+    var div = document.createElement('div');
+    div.className = 'ct-row';
+    div.style.cssText = 'background:#f0f7ff;border:1px solid #c5ddf5;border-radius:4px;padding:10px;margin-bottom:6px;position:relative';
+    div.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#2a7ae2">C/T #' + (idx+1) + ' <span style="font-size:9px;color:#888;font-weight:400">(엑셀 입력)</span></div><button type="button" onclick="this.closest(\'.ct-row\').remove();reNumberCt()" style="font-size:10px;border:none;background:none;color:#999;cursor:pointer">✕ 삭제</button></div>'
+      + '<div class="row" style="margin-bottom:6px"><div><div class="field-label">Item Type</div><select class="ct-item-type"><option value="">:::</option><option value="ETC"' + (item.item_type==='ETC'?' selected':'') + '>ETC</option><option value="ACC"' + (item.item_type==='ACC'?' selected':'') + '>ACC</option><option value="FAB"' + (item.item_type==='FAB'?' selected':'') + '>FAB</option></select></div><div><div class="field-label">Style No</div><input type="text" class="ct-style" value="' + item.style_no.replace(/"/g,'&quot;') + '"></div></div>'
+      + '<div class="row" style="margin-bottom:6px"><div><div class="field-label">중량 (KG)</div><input type="text" class="ct-weight" value="' + item.weight + '"></div><div><div class="field-label">VALUE (단가)</div><input type="text" class="ct-value" value="' + item.value + '"></div></div>'
+      + '<div><div class="field-label">Item Detail <span style="color:#4A90D9;font-size:10px">(인도네시아 발송 건은 혼용률 필수기재 필요)</span></div><input type="text" class="ct-detail" value="' + item.detail.replace(/"/g,'&quot;') + '"></div>';
+    container.appendChild(div);
+  });
+  document.getElementById('ct_count').value = items.length;
+  document.getElementById('markOverlay').style.display = 'none';
+  alert(items.length + '건의 C/T 항목이 적용되었습니다.');
+}
+
+function generateSeaCode(carrier, type) {
+  var prefixMap = {'ACI':'ACI','대선해운항공':'DSB','DAL':'DAL','에어비즈니스':'ABC'};
+  var typeMap = {'OUT':'O','IN':'I','3RD':'3'};
+  var prefix = prefixMap[carrier] || 'ETC';
+  var tcode = typeMap[type] || 'X';
+  var d = new Date();
+  var dateStr = String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  var todayKey = 'SAE-' + prefix + '-' + tcode + '-' + dateStr;
+  var count = 0;
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].sea_code && bookings[i].sea_code.indexOf(todayKey) === 0) count++;
+  }
+  return todayKey + '-' + String(count + 1).padStart(3, '0');
+}
+
+function updateCodePreview() {
+  var carrier = document.querySelector('input[name=bk_carrier]:checked').value;
+  var type = document.querySelector('input[name=bk_type]:checked').value;
+  var preview = generateSeaCode(carrier, type);
+  var el = document.getElementById('blPreviewNo');
+  if (el) el.textContent = preview;
+}
+
+function handleSave() {
+  var required = [
+    ['from_sel','출발지 (SHIP FROM)'],['to_sel','도착지 (SHIP TO)'],
+    ['reg_name','접수자명'],['reg_tel','접수자 연락처'],
+    ['s_person','발송 담당자 이름'],['s_tel','발송 TEL'],
+    ['r_person','수취 담당자 이름'],['r_tel','수취 TEL'],
+    ['pickup_date','픽업 일시'],['ct_count','C/T 개수']
+  ];
+  var missing = [];
+  for (var i = 0; i < required.length; i++) {
+    if (!document.getElementById(required[i][0]).value.trim()) missing.push(required[i][1]);
+  }
+
+  var chargeSel = document.getElementById('ch_sales').checked ? 'charge_sales_sel' : 'charge_nonsales_sel';
+  if (!document.getElementById(chargeSel).value) missing.push('운임 부담 소속 선택');
+
+  var sCompany = document.getElementById('s_company_sel').value.trim();
+  if (!sCompany) missing.push('발송 회사명');
+
+  var sAddr = document.getElementById('s_addr_sel').value.trim();
+  if (!sAddr) missing.push('발송 주소');
+
+  var rCompany = document.getElementById('r_company_sel').value.trim();
+  if (!rCompany) missing.push('수취 회사명');
+
+  var rAddr = document.getElementById('r_addr_sel').value.trim();
+  if (!rAddr) missing.push('수취 주소');
+
+  if (missing.length) { alert('필수 항목을 입력해주세요:\n\n' + missing.join('\n')); return; }
+
+  var bkType = document.querySelector('input[name=bk_type]:checked').value;
+  var bkCarrier = document.querySelector('input[name=bk_carrier]:checked').value;
+  var seaCode = generateSeaCode(bkCarrier, bkType);
+  var ctData = getCtData();
+
+  var booking = {
+    id: Date.now(),
+    bk_type: bkType,
+    bk_carrier: bkCarrier,
+    bk_charge_type: document.querySelector('input[name=bk_charge]:checked').value,
+    bk_charge_dept: document.getElementById('ch_sales').checked
+      ? document.getElementById('charge_sales_sel').value
+      : document.getElementById('charge_nonsales_sel').value,
+    ship_from: document.getElementById('from_sel').value,
+    ship_to: document.getElementById('to_sel').value,
+    sea_code: seaCode,
+    reg_name: document.getElementById('reg_name').value,
+    reg_tel: document.getElementById('reg_tel').value,
+    r_company: rCompany,
+    r_person: document.getElementById('r_person').value,
+    r_tel: document.getElementById('r_tel').value,
+    r_addr: rAddr,
+    pickup_date: document.getElementById('pickup_date').value,
+    ct_count: document.getElementById('ct_count').value,
+    ct_data: ctData,
+    ct_weight: ctData.map(function(c){return c.weight}).join(', '),
+    item_type: ctData.map(function(c){return c.item_type}).filter(Boolean).join(', '),
+    item_style: ctData.map(function(c){return c.style_no}).filter(Boolean).join(', '),
+    item_detail: ctData.map(function(c){return c.detail}).filter(Boolean).join(' / '),
+    memo: document.getElementById('memo').value,
+    s_company: sCompany,
+    s_person: document.getElementById('s_person').value,
+    s_tel: document.getElementById('s_tel').value,
+    s_addr: sAddr,
+    status: 'waiting',
+    created: new Date().toISOString()
+  };
+
+  bookings.push(booking);
+  localStorage.setItem('saea_bookings', JSON.stringify(bookings));
+  printLabel(booking);
+
+  // 폼 일부 초기화
+  ['r_company_txt','r_person','r_tel','r_addr',
+   'reg_name','reg_tel','memo','s_person'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('ct_count').value = '1';
+  document.getElementById('pickup_date').value = '';
+  document.getElementById('r_company_sel').value = '';
+  document.getElementById('r_addr_sel').value = '';
+  document.getElementById('to_sel').value = '';
+  document.getElementById('from_sel').value = '';
+  document.getElementById('charge_sales_sel').value = '';
+  document.getElementById('charge_nonsales_sel').value = '';
+  document.getElementById('ctRows').innerHTML = document.getElementById('ctRows').querySelector('.ct-row').outerHTML;
+}
+
+function renderList() {
+  var body = document.getElementById('listBody');
+  var empty = document.getElementById('emptyMsg');
+  body.innerHTML = '';
+
+  var dateFrom = document.getElementById('srcDateFrom').value;
+  var dateTo = document.getElementById('srcDateTo').value;
+  var srcFrom = document.getElementById('srcFrom').value;
+  var srcTo = document.getElementById('srcTo').value;
+  var srcCharge = document.getElementById('srcCharge').value;
+  var srcSender = document.getElementById('srcSender').value.trim().toLowerCase();
+  var srcReceiver = document.getElementById('srcReceiver').value.trim().toLowerCase();
+
+  var filtered = bookings.filter(function(b) {
+    if (dateFrom && b.pickup_date && b.pickup_date < dateFrom) return false;
+    if (dateTo && b.pickup_date && b.pickup_date > dateTo) return false;
+    if (srcFrom && b.ship_from !== srcFrom) return false;
+    if (srcTo && b.ship_to !== srcTo) return false;
+    if (srcCharge && (b.bk_charge_dept || '').indexOf(srcCharge) < 0) return false;
+    if (srcSender && (b.s_person || '').toLowerCase().indexOf(srcSender) < 0) return false;
+    if (srcReceiver && (b.r_company || '').toLowerCase().indexOf(srcReceiver) < 0) return false;
+    return true;
+  });
+
+  if (!filtered.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  for (var i = filtered.length - 1; i >= 0; i--) {
+    var b = filtered[i];
+    var idx = bookings.indexOf(b);
+    var badge = (b.awb_no && b.awb_ct && b.awb_wt)
+      ? '<span class="badge badge-done">배차완료<br>Dispatch</span>'
+      : '<span class="badge badge-wait">대기중</span>';
+    var saveTime = b.created ? new Date(b.created) : null;
+    var timeStr = saveTime ? (String(saveTime.getHours()).padStart(2,'0') + ':' + String(saveTime.getMinutes()).padStart(2,'0')) : '';
+    var dt = (b.pickup_date || '-') + ' ' + timeStr;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><input type="checkbox" class="row-check" data-idx="' + idx + '"></td>'
+      + '<td style="font-size:11px;white-space:nowrap">' + dt + '</td>'
+      + '<td><a href="#" onclick="showDetail(' + idx + ');return false" style="color:#2a7ae2;font-weight:700;font-family:monospace;font-size:12px;text-decoration:underline;cursor:pointer">' + (b.sea_code || '-') + '</a></td>'
+      + '<td><input type="text" class="edit-awb" data-idx="' + idx + '" value="' + (b.awb_no || '') + '" placeholder="-" style="width:110px;font-size:11px;padding:4px 6px;border:1px solid #ddd;border-radius:3px;text-align:center"></td>'
+      + '<td><input type="text" class="edit-ct" data-idx="' + idx + '" value="' + (b.awb_ct || '') + '" placeholder="-" style="width:60px;font-size:11px;padding:4px 6px;border:1px solid #ddd;border-radius:3px;text-align:center"></td>'
+      + '<td><input type="text" class="edit-wt" data-idx="' + idx + '" value="' + (b.awb_wt || '') + '" placeholder="-" style="width:70px;font-size:11px;padding:4px 6px;border:1px solid #ddd;border-radius:3px;text-align:center"></td>'
+      + '<td>'
+      + (b.cargo_photo ? '<img src="' + b.cargo_photo + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px;cursor:pointer;border:1px solid #ddd" onclick="viewPhoto(' + idx + ')">' : '')
+      + '<label style="cursor:pointer;display:block;margin-top:' + (b.cargo_photo ? '4' : '0') + 'px"><input type="file" accept="image/*" style="display:none" onchange="uploadPhoto(this,' + idx + ')"><span class="btn-sm" style="font-size:10px;padding:3px 8px;display:inline-block">' + (b.cargo_photo ? '변경' : '📷 업로드') + '</span></label>'
+      + '</td>'
+      + '<td><button class="btn-sm" onclick="printLabel(bookings[' + idx + '])">Print</button></td>'
+      + '<td>' + (b.ship_to === 'ID' ? '<button class="btn-sm" style="border-color:#28a745;color:#28a745" onclick="downloadIdnDetail(' + idx + ')">📥 다운로드</button>' : '<span style="color:#ccc">-</span>') + '</td>'
+      + '<td style="font-size:11px">' + (b.bk_charge_dept || '-') + '</td>'
+      + '<td>' + (b.ship_from || '-') + '</td>'
+      + '<td>' + (b.ship_to || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.s_person || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.s_company || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.r_person || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.r_company || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.ct_data && b.ct_data.length ? b.ct_data.map(function(c){return c.style_no||''}).filter(Boolean).join(', ') : '-') + '</td>'
+      + '<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (b.ct_data && b.ct_data.length ? b.ct_data.map(function(c){return c.detail||''}).filter(Boolean).join(', ') : '-') + '</td>'
+      + '<td style="text-align:center">' + (b.ct_count || '-') + '</td>'
+      + '<td style="text-align:center">' + (b.ct_data && b.ct_data.length ? b.ct_data.reduce(function(s,c){return s+(parseFloat(c.weight)||0)},0) || '-' : '-') + '</td>'
+      + '<td style="max-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (b.memo || '-') + '</td>'
+      + '<td>' + badge + '</td>';
+    body.appendChild(tr);
+  }
+}
+
+function toggleCheckAll() {
+  var checked = document.getElementById('checkAll').checked;
+  document.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = checked; });
+}
+
+function saveListEdits() {
+  var checks = document.querySelectorAll('.row-check:checked');
+  if (!checks.length) { alert('저장할 항목을 선택해주세요.'); return; }
+  var count = 0;
+  checks.forEach(function(cb) {
+    var idx = parseInt(cb.dataset.idx);
+    var row = cb.closest('tr');
+    bookings[idx].awb_no = row.querySelector('.edit-awb').value.trim();
+    bookings[idx].awb_ct = row.querySelector('.edit-ct').value.trim();
+    bookings[idx].awb_wt = row.querySelector('.edit-wt').value.trim();
+    count++;
+  });
+  localStorage.setItem('saea_bookings', JSON.stringify(bookings));
+  alert(count + '건의 업체 입력 정보가 저장되었습니다.');
+  renderList();
+}
+
+function resetSearch() {
+  document.getElementById('srcDateFrom').value = '';
+  document.getElementById('srcDateTo').value = '';
+  document.getElementById('srcFrom').value = '';
+  document.getElementById('srcTo').value = '';
+  document.getElementById('srcCharge').value = '';
+  document.getElementById('srcSender').value = '';
+  document.getElementById('srcReceiver').value = '';
+  renderList();
+}
+
+function showDetail(idx) {
+  var b = bookings[idx];
+  var overlay = document.getElementById('markOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'markOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+
+  var charge = (b.bk_charge_type || '-') + (b.bk_charge_dept ? ' / ' + b.bk_charge_dept : '');
+  var saveTime = b.created ? new Date(b.created) : null;
+  var timeStr = saveTime ? (saveTime.getFullYear() + '-' + String(saveTime.getMonth()+1).padStart(2,'0') + '-' + String(saveTime.getDate()).padStart(2,'0') + ' ' + String(saveTime.getHours()).padStart(2,'0') + ':' + String(saveTime.getMinutes()).padStart(2,'0')) : '-';
+
+  overlay.innerHTML = '<div style="background:#fff;border-radius:8px;max-width:600px;width:95%;max-height:90vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)">'
+    + '<div style="background:#4A90D9;color:#fff;padding:14px 20px;font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0">'
+    + '<span>발송예약 상세 — ' + (b.sea_code || '') + '</span>'
+    + '<span onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="cursor:pointer;font-size:20px;line-height:1">✕</span></div>'
+    + '<div style="padding:20px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;width:140px;border:1px solid #eee">세아 EXPRESS CODE</td><td style="padding:8px 12px;border:1px solid #eee;font-family:monospace;font-weight:700;font-size:15px">' + (b.sea_code || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">접수일시</td><td style="padding:8px 12px;border:1px solid #eee">' + timeStr + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">TYPE</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.bk_type || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">운임 부담</td><td style="padding:8px 12px;border:1px solid #eee">' + charge + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">접수자 / TEL</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.reg_name || '-') + ' / ' + (b.reg_tel || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">업체 (CARRIER)</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.bk_carrier || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">SHIP FROM → TO</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.ship_from || '-') + ' → ' + (b.ship_to || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">픽업일시</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.pickup_date || '-') + '</td></tr>'
+    + '<tr><td colspan="2" style="padding:6px 12px;background:#eee;font-weight:700;border:1px solid #ddd">발송정보</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">회사명</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.s_company || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">담당자 / TEL</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.s_person || '-') + ' / ' + (b.s_tel || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">주소</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.s_addr || '-') + '</td></tr>'
+    + '<tr><td colspan="2" style="padding:6px 12px;background:#eee;font-weight:700;border:1px solid #ddd">수취정보</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">회사명</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.r_company || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">담당자 / TEL</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.r_person || '-') + ' / ' + (b.r_tel || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">주소</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.r_addr || '-') + '</td></tr>'
+    + '<tr><td colspan="2" style="padding:6px 12px;background:#eee;font-weight:700;border:1px solid #ddd">화물정보</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">C/T 개수 / 중량</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.ct_count || '-') + ' C/T / ' + (b.ct_weight || '-') + ' KG</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">Item Type / Style No</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.item_type || '-') + ' / ' + (b.item_style || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">Item Detail</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.item_detail || '-') + '</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">메모</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.memo || '-').replace(/\n/g,'<br>') + '</td></tr>'
+    + '<tr><td colspan="2" style="padding:6px 12px;background:#eee;font-weight:700;border:1px solid #ddd">업체 입력 정보</td></tr>'
+    + '<tr><td style="padding:8px 12px;background:#f7f7f7;font-weight:600;border:1px solid #eee">운송장번호 (AWB)</td><td style="padding:8px 12px;border:1px solid #eee">' + (b.awb_no || '<span style="color:#999">미입력</span>') + '</td></tr>'
+    + '</table>'
+    + '<div style="text-align:center;margin-top:16px">'
+    + '<button onclick="printLabel(bookings[' + idx + '])" style="padding:10px 30px;font-size:13px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:#4A90D9;color:#fff;margin-right:8px">SHIPPING MARK 출력</button>'
+    + '<button onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="padding:10px 30px;font-size:13px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:#eee;color:#333">닫기</button>'
+    + '</div></div></div>';
+}
+
+function downloadIdnDetail(idx) {
+  var b = bookings[idx];
+  var ct = b.ct_data || [];
+  if (!ct.length) { alert('해당 건에 화물 디테일 데이터가 없습니다.'); return; }
+
+  var charge = (b.bk_charge_type === '영업') ? (b.bk_charge_dept || '') : ('비영업/' + (b.bk_charge_dept || ''));
+
+  var headers = ['NO','DETAIL 재질(혼용률)','ORIGIN','STYLE/ITEM NO.','DESCRIPTION OF GOODS','중량(KG)','VALUE(단가)','QUANTITY','UNIT','C/T','REMARK','담당','담당자'];
+  var rows = [headers];
+  ct.forEach(function(item, i) {
+    rows.push([
+      i + 1,
+      item.detail || '',
+      'KOREA',
+      item.style_no || '',
+      item.detail || '',
+      item.weight || '',
+      item.value || '',
+      1,
+      'PCS',
+      '1 C/T',
+      '',
+      charge,
+      b.s_person || ''
+    ]);
+  });
+  var totalW = 0, totalV = 0;
+  ct.forEach(function(item) {
+    totalW += parseFloat(item.weight) || 0;
+    totalV += parseFloat((item.value||'').replace(/[^0-9.]/g,'')) || 0;
+  });
+  rows.push(['','','','','TOTAL', totalW || '', totalV || '', ct.length, '', ct.length + ' C/T', '']);
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:4},{wch:20},{wch:8},{wch:18},{wch:30},{wch:10},{wch:12},{wch:10},{wch:6},{wch:8},{wch:12},{wch:16},{wch:12}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'SHIPPING MARK');
+  var filename = 'IDN_DETAIL_' + (b.sea_code || 'export') + '.xlsx';
+  XLSX.writeFile(wb, filename);
+}
+
+function downloadIdnBulk() {
+  var checks = document.querySelectorAll('.row-check:checked');
+  if (!checks.length) { alert('다운로드할 항목을 선택해주세요.'); return; }
+  var count = 0;
+  checks.forEach(function(cb) {
+    var idx = parseInt(cb.dataset.idx);
+    if (bookings[idx].ship_to === 'ID') {
+      downloadIdnDetail(idx);
+      count++;
+    }
+  });
+  if (!count) alert('선택한 항목 중 인도네시아(ID) 발송 건이 없습니다.');
+}
+
+function uploadPhoto(input, idx) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) { alert('파일 크기가 5MB를 초과합니다.\n5MB 이하 이미지를 업로드해주세요.'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    bookings[idx].cargo_photo = e.target.result;
+    localStorage.setItem('saea_bookings', JSON.stringify(bookings));
+    renderList();
+  };
+  reader.readAsDataURL(file);
+}
+
+function viewPhoto(idx) {
+  var b = bookings[idx];
+  if (!b.cargo_photo) return;
+  var overlay = document.getElementById('markOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'markOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:8px;padding:20px;max-width:90vw;max-height:90vh;overflow:auto;text-align:center">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+    + '<span style="font-weight:700;font-size:14px">📷 화물 사진 — ' + (b.sea_code || '') + '</span>'
+    + '<span onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="cursor:pointer;font-size:20px;color:#999">✕</span></div>'
+    + '<img src="' + b.cargo_photo + '" style="max-width:100%;max-height:70vh;border-radius:4px;border:1px solid #ddd">'
+    + '<div style="margin-top:12px">'
+    + '<button onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="padding:8px 30px;font-size:13px;border:none;border-radius:4px;cursor:pointer;background:#eee;color:#333;margin-right:8px">닫기</button>'
+    + '<button onclick="deletePhoto(' + idx + ')" style="padding:8px 30px;font-size:13px;border:none;border-radius:4px;cursor:pointer;background:#dc3545;color:#fff">삭제</button>'
+    + '</div></div>';
+}
+
+function deletePhoto(idx) {
+  if (!confirm('사진을 삭제하시겠습니까?')) return;
+  delete bookings[idx].cargo_photo;
+  localStorage.setItem('saea_bookings', JSON.stringify(bookings));
+  document.getElementById('markOverlay').style.display = 'none';
+  renderList();
+}
+
+function downloadPickupList() {
+  // 현재 검색 필터 적용된 목록 기준
+  var dateFrom = document.getElementById('srcDateFrom').value;
+  var dateTo = document.getElementById('srcDateTo').value;
+  var srcFrom = document.getElementById('srcFrom').value;
+  var srcTo = document.getElementById('srcTo').value;
+  var srcCharge = document.getElementById('srcCharge').value;
+  var srcSender = document.getElementById('srcSender').value.trim().toLowerCase();
+  var srcReceiver = document.getElementById('srcReceiver').value.trim().toLowerCase();
+
+  var filtered = bookings.filter(function(b) {
+    if (dateFrom && b.pickup_date && b.pickup_date < dateFrom) return false;
+    if (dateTo && b.pickup_date && b.pickup_date > dateTo) return false;
+    if (srcFrom && b.ship_from !== srcFrom) return false;
+    if (srcTo && b.ship_to !== srcTo) return false;
+    if (srcCharge && (b.bk_charge_dept || '').indexOf(srcCharge) < 0) return false;
+    if (srcSender && (b.s_person || '').toLowerCase().indexOf(srcSender) < 0) return false;
+    if (srcReceiver && (b.r_company || '').toLowerCase().indexOf(srcReceiver) < 0) return false;
+    return true;
+  });
+
+  if (!filtered.length) { alert('다운로드할 데이터가 없습니다.'); return; }
+
+  // 업체별로 시트 분리
+  var carrierGroups = {};
+  filtered.forEach(function(b) {
+    var carrier = b.bk_carrier || '기타';
+    if (!carrierGroups[carrier]) carrierGroups[carrier] = [];
+    carrierGroups[carrier].push(b);
+  });
+
+  var wb = XLSX.utils.book_new();
+  var headers = ['NO','세아 EXPRESS CODE','픽업일시','TYPE','SHIP FROM','SHIP TO','발송자','발송회사','발송TEL','발송주소','수취인','수취회사','수취TEL','수취주소','C/T 개수','STYLE NO','ITEM DETAIL','중량(KG)','VALUE','메모','상태'];
+
+  Object.keys(carrierGroups).forEach(function(carrier) {
+    var items = carrierGroups[carrier];
+    var rows = [headers];
+    items.forEach(function(b, i) {
+      var styleNos = b.ct_data ? b.ct_data.map(function(c){return c.style_no||''}).filter(Boolean).join(', ') : '';
+      var details = b.ct_data ? b.ct_data.map(function(c){return c.detail||''}).filter(Boolean).join(', ') : '';
+      var totalWeight = b.ct_data ? b.ct_data.reduce(function(s,c){return s+(parseFloat(c.weight)||0)},0) : '';
+      var totalValue = b.ct_data ? b.ct_data.reduce(function(s,c){return s+(parseFloat((c.value||'').replace(/[^0-9.]/g,''))||0)},0) : '';
+      var status = (b.awb_no && b.awb_ct && b.awb_wt) ? '배차완료' : '대기중';
+      rows.push([
+        i + 1,
+        b.sea_code || '',
+        b.pickup_date || '',
+        b.bk_type || '',
+        b.ship_from || '',
+        b.ship_to || '',
+        b.s_person || '',
+        b.s_company || '',
+        b.s_tel || '',
+        b.s_addr || '',
+        b.r_person || '',
+        b.r_company || '',
+        b.r_tel || '',
+        b.r_addr || '',
+        b.ct_count || '',
+        styleNos,
+        details,
+        totalWeight || '',
+        totalValue || '',
+        b.memo || '',
+        status
+      ]);
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:4},{wch:24},{wch:12},{wch:5},{wch:6},{wch:6},{wch:10},{wch:22},{wch:15},{wch:30},{wch:10},{wch:22},{wch:15},{wch:30},{wch:6},{wch:16},{wch:30},{wch:8},{wch:8},{wch:20},{wch:8}];
+    var sheetName = carrier.substring(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, 'PICKUP_LIST_' + dateStr + '.xlsx');
+}
+
+function getDownloadFiltered() {
+  var dlDate = document.getElementById('dlDate').value;
+  var dlFrom = document.getElementById('dlDateFrom').value;
+  var dlTo = document.getElementById('dlDateTo').value;
+  return bookings.filter(function(b) {
+    if (dlDate) return b.pickup_date === dlDate;
+    if (dlFrom && b.pickup_date && b.pickup_date < dlFrom) return false;
+    if (dlTo && b.pickup_date && b.pickup_date > dlTo) return false;
+    return true;
+  });
+}
+
+function renderDownloadList() {
+  var body = document.getElementById('dlBody');
+  var empty = document.getElementById('dlEmptyMsg');
+  body.innerHTML = '';
+  var filtered = getDownloadFiltered();
+  if (!filtered.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  for (var i = 0; i < filtered.length; i++) {
+    var b = filtered[i];
+    var closeMonth = b.pickup_date ? b.pickup_date.substring(0, 7) : '-';
+    var charge = (b.bk_charge_type === '영업')
+      ? (b.bk_charge_dept || '-')
+      : (b.bk_charge_dept ? '비영업/' + b.bk_charge_dept : '비영업');
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + (i + 1) + '</td>'
+      + '<td>' + closeMonth + '</td>'
+      + '<td style="font-size:11px">' + charge + '</td>'
+      + '<td><b>' + (b.bk_type || '-') + '</b></td>'
+      + '<td>' + (b.pickup_date || '-') + '</td>'
+      + '<td style="font-family:monospace;font-size:11px">' + (b.awb_no || '-') + '</td>'
+      + '<td>' + (b.ship_from || '-') + '</td>'
+      + '<td>' + (b.ship_to || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.s_company || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.s_person || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.r_company || '-') + '</td>'
+      + '<td style="font-size:11px">' + (b.r_person || '-') + '</td>'
+      + '<td style="text-align:center">' + (b.awb_ct || '-') + '</td>'
+      + '<td style="text-align:center">' + (b.awb_wt || '-') + '</td>'
+      + '<td style="max-width:120px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (b.memo || '-') + '</td>';
+    body.appendChild(tr);
+  }
+}
+
+function resetDlSearch() {
+  document.getElementById('dlDate').value = '';
+  document.getElementById('dlDateFrom').value = '';
+  document.getElementById('dlDateTo').value = '';
+  renderDownloadList();
+}
+
+function exportDownloadList() {
+  var filtered = getDownloadFiltered();
+  if (!filtered.length) { alert('다운로드할 데이터가 없습니다.'); return; }
+
+  var headers = ['NO','CLOSE MONTH (마감월)','운임부담','TYPE','픽업일자','BL NO','SHIP FROM','SHIP TO','FACTORY (발송회사)','SENDER (발송자)','CONSIGNEE (수취회사)','RECEIVER (수취인)','CARTON NO (발송개수)','WEIGHT TON (중량)','REMARK'];
+  var rows = [headers];
+
+  filtered.forEach(function(b, i) {
+    var closeMonth = b.pickup_date ? b.pickup_date.substring(0, 7) : '';
+    var charge = (b.bk_charge_type === '영업')
+      ? (b.bk_charge_dept || '')
+      : (b.bk_charge_dept ? '비영업/' + b.bk_charge_dept : '비영업');
+    rows.push([
+      i + 1,
+      closeMonth,
+      charge,
+      b.bk_type || '',
+      b.pickup_date || '',
+      b.awb_no || '',
+      b.ship_from || '',
+      b.ship_to || '',
+      b.s_company || '',
+      b.s_person || '',
+      b.r_company || '',
+      b.r_person || '',
+      b.awb_ct || '',
+      b.awb_wt || '',
+      b.memo || ''
+    ]);
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:4},{wch:14},{wch:18},{wch:5},{wch:12},{wch:16},{wch:8},{wch:8},{wch:24},{wch:12},{wch:24},{wch:12},{wch:12},{wch:12},{wch:20}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '발송 리스트');
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, 'SHIPMENT_LIST_' + dateStr + '.xlsx');
+}
+
+function printLabel(b) {
+  var overlay = document.getElementById('markOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'markOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:8px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow:auto">'
+    + '<div style="width:420px;max-width:100%;border:3px solid #000;margin:0 auto" id="markPrintArea">'
+    + '<div style="background:#222;color:#fff;text-align:center;padding:6px;font-size:11px;font-weight:700;letter-spacing:3px">SAE-A TRADING — SHIPPING MARK</div>'
+    + '<div style="text-align:center;padding:22px 10px 18px;border-bottom:3px solid #000">'
+    + '<div style="font-size:36px;font-weight:900;letter-spacing:3px;font-family:Courier New,monospace">' + (b.sea_code || 'N/A') + '</div>'
+    + '</div>'
+    + '<div style="border-bottom:2px solid #000;padding:12px 16px">'
+    + '<div style="font-size:9px;font-weight:700;color:#888;letter-spacing:1px;margin-bottom:3px">FROM / SHIPPER</div>'
+    + '<div style="font-size:15px;font-weight:700">' + (b.s_company || '-') + '</div>'
+    + '<div style="font-size:13px;margin-top:2px">' + (b.s_person || '-') + '</div>'
+    + '</div>'
+    + '<div style="padding:12px 16px">'
+    + '<div style="font-size:9px;font-weight:700;color:#888;letter-spacing:1px;margin-bottom:3px">TO / RECEIVER</div>'
+    + '<div style="font-size:15px;font-weight:700">' + (b.r_company || '-') + '</div>'
+    + '<div style="font-size:13px;margin-top:2px">' + (b.r_person || '-') + '</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="text-align:center;margin-top:20px">'
+    + '<button onclick="printMark()" style="padding:10px 36px;font-size:14px;font-weight:600;border:none;border-radius:4px;cursor:pointer;margin:0 6px;background:#4A90D9;color:#fff">인쇄하기</button>'
+    + '<button onclick="document.getElementById(\'markOverlay\').style.display=\'none\'" style="padding:10px 36px;font-size:14px;font-weight:600;border:none;border-radius:4px;cursor:pointer;margin:0 6px;background:#eee;color:#333">닫기</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function printMark() {
+  var area = document.getElementById('markPrintArea');
+  var w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Shipping Mark</title><style>body{margin:30px;font-family:"Malgun Gothic",sans-serif}</style></head><body>' + area.outerHTML + '<script>window.print()<\/script></body></html>');
+  w.document.close();
+}
+
+// 오늘 날짜 기본값 & 초기 TYPE 설정
+(function(){
+  var d = new Date();
+  var str = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  document.getElementById('pickup_date').value = str;
+  onTypeChange();
+  updateRoutes();
+})();
+</script>
+</body>
+</html>
